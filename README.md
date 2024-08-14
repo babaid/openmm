@@ -19,6 +19,13 @@ force.addGlobalParameter('cutoff', 0.2*unit.nanometer)
 
 But CustomCVForce is kind of a 'bubble' in memory and consumes lots of it (at least of shared memory on a gpu), so most of the time the system simulated like this has to be smaller than a standard MD simulation could be nowadays, or it has to be run on a CPU which is much slower. 
 
+The usage in this case is almost the same:
+
+```python
+force = CutoffAngleForce()
+force.addBond(i, j, cutoff)
+# add angles depending on bond
+```
 
 [![GH Actions Status](https://github.com/openmm/openmm/workflows/CI/badge.svg)](https://github.com/openmm/openmm/actions?query=branch%3Amaster+workflow%3ACI)
 [![Conda](https://img.shields.io/conda/v/conda-forge/openmm.svg)](https://anaconda.org/conda-forge/openmm)
