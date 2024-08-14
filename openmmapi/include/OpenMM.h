@@ -54,6 +54,7 @@
 #include "openmm/GBSAOBCForce.h"
 #include "openmm/HarmonicAngleForce.h"
 #include "openmm/HarmonicBondForce.h"
+#include "openmm/CutoffAngleForce.h"
 #include "openmm/Integrator.h"
 #include "openmm/LangevinIntegrator.h"
 #include "openmm/LangevinMiddleIntegrator.h"
