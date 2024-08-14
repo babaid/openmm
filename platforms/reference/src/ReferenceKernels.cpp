@@ -538,6 +538,63 @@ void ReferenceCalcHarmonicAngleForceKernel::copyParametersToContext(ContextImpl&
     }
 }
 
+void ReferenceCalcCutoffAngleForceKernel::initialize(const System& system, const CutoffAngleForce& force) {
+    numAngles = force.getNumAngles();
+    angleIndexArray.resize(numAngles, vector<int>(3));
+    angleParamArray.resize(numAngles, vector<double>(2));
+    int bondparticle1, bondparticle2;
+    double cutoff;
+    force.getBondParameter(bondparticle1, bondparticle2, cutoff);
+
+    for (int i = 0; i < numAngles; ++i) {
+        int particle1, particle2, particle3;
+        double angle, k;
+        force.getAngleParameters(i, particle1, particle2, particle3, angle, k);
+        angleIndexArray[i][0] = bondparticle1;
+        angleIndexArray[i][1] = bondparticle1;
+        angleIndexArray[i][2] = particle1;
+        angleIndexArray[i][3] = particle2;
+        angleIndexArray[i][4] = particle3;
+        angleParamArray[i][0] = angle;
+        angleParamArray[i][1] = k;
+        angleParamArray[i][2] = cutoff;
+    }
+    usePeriodic = force.usesPeriodicBoundaryConditions();
+}
+
+double ReferenceCalcCutoffAngleForceKernel::execute(ContextImpl& context, bool includeForces, bool includeEnergy) {
+    vector<Vec3>& posData = extractPositions(context);
+    vector<Vec3>& forceData = extractForces(context);
+    double energy = 0;
+    ReferenceBondForce refBondForce;
+    ReferenceAngleBondIxn angleBond;
+    if (usePeriodic)
+        angleBond.setPeriodic(extractBoxVectors(context));
+    refBondForce.calculateForce(numAngles, angleIndexArray, posData, angleParamArray, forceData, includeEnergy ? &energy : NULL, angleBond);
+    return energy;
+}
+
+void ReferenceCalcCutoffAngleForceKernel::copyParametersToContext(ContextImpl& context, const CutoffAngleForce& force) {
+    if (numAngles != force.getNumAngles())
+        throw OpenMMException("updateParametersInContext: The number of angles has changed");
+
+    // Record the values.
+    int bondparticle1, bondparticle2;
+    double cutoff;
+    force.getBondParameter(bondparticle1, bondparticle2, cutoff);
+    for (int i = 0; i < numAngles; ++i) {
+        int particle1, particle2, particle3;
+        double angle, k;
+        force.getAngleParameters(i, particle1, particle2, particle3, angle, k);
+        if (particle1 != angleIndexArray[i][0] || particle2 != angleIndexArray[i][1] || particle3 != angleIndexArray[i][2])
+            throw OpenMMException("updateParametersInContext: The set of particles in an angle has changed");
+        angleParamArray[i][0] = angle;
+        angleParamArray[i][1] = k;
+        angleParamArray[i][2] = cutoff;
+    }
+}
+
+
 ReferenceCalcCustomAngleForceKernel::~ReferenceCalcCustomAngleForceKernel() {
     if (ixn != NULL)
         delete ixn;
@@ -550,7 +607,7 @@ void ReferenceCalcCustomAngleForceKernel::initialize(const System& system, const
 
     // Build the arrays.
 
-    angleIndexArray.resize(numAngles, vector<int>(3));
+    angleIndexArray.resize(numAngles, vector<int>(5));
     angleParamArray.resize(numAngles, vector<double>(numParameters));
     vector<double> params;
     for (int i = 0; i < numAngles; ++i) {

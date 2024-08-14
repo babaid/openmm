@@ -401,6 +401,44 @@ private:
 };
 
 /**
+ * This kernel is invoked by HarmonicAngleForce to calculate the forces acting on the system and the energy of the system.
+ */
+    class ReferenceCalcCutoffAngleForceKernel : public CalcCutoffAngleForceKernel {
+    public:
+        ReferenceCalcCutoffAngleForceKernel(std::string name, const Platform& platform) : CalcCutoffAngleForceKernel(name, platform) {
+        }
+        /**
+         * Initialize the kernel.
+         *
+         * @param system     the System this kernel will be applied to
+         * @param force      the HarmonicAngleForce this kernel will be used for
+         */
+        void initialize(const System& system, const CutoffAngleForce& force);
+        /**
+         * Execute the kernel to calculate the forces and/or energy.
+         *
+         * @param context        the context in which to execute this kernel
+         * @param includeForces  true if forces should be calculated
+         * @param includeEnergy  true if the energy should be calculated
+         * @return the potential energy due to the force
+         */
+        double execute(ContextImpl& context, bool includeForces, bool includeEnergy);
+        /**
+         * Copy changed parameters over to a context.
+         *
+         * @param context    the context to copy parameters to
+         * @param force      the HarmonicAngleForce to copy the parameters from
+         */
+        void copyParametersToContext(ContextImpl& context, const CutoffAngleForce& force);
+    private:
+        int numAngles;
+        std::vector<std::vector<int> >angleIndexArray;
+        std::vector<std::vector<double> >angleParamArray;
+        bool usePeriodic;
+    };
+
+
+/**
  * This kernel is invoked by CustomAngleForce to calculate the forces acting on the system and the energy of the system.
  */
 class ReferenceCalcCustomAngleForceKernel : public CalcCustomAngleForceKernel {
