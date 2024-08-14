@@ -1,6 +1,6 @@
 # About this fork.
 
-In this fork of openmm I am exploring the defintion of new types of forces. As of now I have created a CutoffAngleForce for the Reference platform. The idea behind it is that you can define a pair of atoms of which the distance is going to determine how strong the normal harmonic angle force is going to be. The cutoff function is sigmoidal to reduce artifacts during simulation. Notice that you can also use the cutoff value to entirely toggle the force, by setting it to 
+In this fork of openmm I am exploring the defintion of new types of forces. As of now I have created a CutoffAngleForce for the Reference and CUDA platform. The idea behind it is that you can define a pair of atoms of which the distance is going to determine how strong the normal harmonic angle force is going to be. The cutoff function is sigmoidal to reduce artifacts during simulation. Notice that you can also use the cutoff value to entirely toggle the force, by setting it to 
 a value <=0. 
 
 I plan to implement a similar CutoffTorsionForce, and try to at least implement both for CUDA/OpenCL so it can be used in more intensive simulation.
