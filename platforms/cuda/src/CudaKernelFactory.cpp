@@ -47,6 +47,8 @@ KernelImpl* CudaKernelFactory::createKernelImpl(std::string name, const Platform
             return new CudaParallelCalcCustomBondForceKernel(name, platform, data, context.getSystem());
         if (name == CalcHarmonicAngleForceKernel::Name())
             return new CudaParallelCalcHarmonicAngleForceKernel(name, platform, data, context.getSystem());
+        if (name == CalcCutoffAngleForceKernel::Name())
+            return new CudaParallelCalcCutoffAngleForceKernel(name, platform, data, context.getSystem());
         if (name == CalcCustomAngleForceKernel::Name())
             return new CudaParallelCalcCustomAngleForceKernel(name, platform, data, context.getSystem());
         if (name == CalcPeriodicTorsionForceKernel::Name())
@@ -83,6 +85,8 @@ KernelImpl* CudaKernelFactory::createKernelImpl(std::string name, const Platform
         return new CommonCalcCustomBondForceKernel(name, platform, cu, context.getSystem());
     if (name == CalcHarmonicAngleForceKernel::Name())
         return new CommonCalcHarmonicAngleForceKernel(name, platform, cu, context.getSystem());
+    if (name == CalcCutoffAngleForceKernel::Name())
+        return new CommonCalcCutoffAngleForceKernel(name, platform, cu, context.getSystem());
     if (name == CalcCustomAngleForceKernel::Name())
         return new CommonCalcCustomAngleForceKernel(name, platform, cu, context.getSystem());
     if (name == CalcPeriodicTorsionForceKernel::Name())

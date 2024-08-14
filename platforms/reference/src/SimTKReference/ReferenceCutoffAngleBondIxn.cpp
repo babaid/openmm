@@ -91,13 +91,14 @@ void ReferenceCutoffAngleBondIxn::calculateBondIxn(vector<int>& atomIndices,
 
     // get deltaR, R2, and R between 2 atoms
 
-    int bondAtomA = atomIndices[0];
-    int bondAtomB = atomIndices[1];
+    int bondAtomA = atomIndices[3];
+    int bondAtomB = atomIndices[4];
     double cutoff = parameters[2];
     double sigmoidFactor = 1/(1+std::exp(std::sqrt(DOT3(atomCoordinates[bondAtomA], atomCoordinates[bondAtomB])) - cutoff ));
-    int atomAIndex = atomIndices[2];
-    int atomBIndex = atomIndices[3];
-    int atomCIndex = atomIndices[4];
+
+    int atomAIndex = atomIndices[0];
+    int atomBIndex = atomIndices[1];
+    int atomCIndex = atomIndices[2];
     if (usePeriodic) {
         ReferenceForce::getDeltaRPeriodic(atomCoordinates[atomAIndex], atomCoordinates[atomBIndex], boxVectors, deltaR[0]);
         ReferenceForce::getDeltaRPeriodic(atomCoordinates[atomCIndex], atomCoordinates[atomBIndex], boxVectors, deltaR[1]);
@@ -120,6 +121,7 @@ void ReferenceCutoffAngleBondIxn::calculateBondIxn(vector<int>& atomIndices,
     double energy;
     getPrefactorsGivenAngleCosine(cosine, parameters, &dEdR, &energy);
     dEdR*=sigmoidFactor;
+    energy*=sigmoidFactor;
     double termA           =  dEdR/(deltaR[0][ReferenceForce::R2Index]*rp);
     double termC           = -dEdR/(deltaR[1][ReferenceForce::R2Index]*rp);
 

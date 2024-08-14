@@ -790,6 +790,107 @@ void CommonCalcHarmonicAngleForceKernel::copyParametersToContext(ContextImpl& co
     cc.invalidateMolecules();
 }
 
+class CommonCalcCutoffAngleForceKernel::ForceInfo : public ComputeForceInfo {
+public:
+    ForceInfo(const CutoffAngleForce& force) : force(force) {
+    }
+    int getNumParticleGroups() {
+        return force.getNumAngles();
+    }
+    void getParticlesInGroup(int index, vector<int>& particles) {
+        int particle1, particle2, particle3;
+        double angle, k;
+        force.getAngleParameters(index, particle1, particle2, particle3, angle, k);
+        int bondingparticle1, bondingparticle2;
+        double cutoff;
+        force.getBondParameter(bondingparticle1, bondingparticle2, cutoff);
+        particles.resize(5);
+        particles[0] = particle1;
+        particles[1] = particle2;
+        particles[2] = particle3;
+        particles[3] = bondingparticle1;
+        particles[4] = bondingparticle2;
+    }
+    bool areGroupsIdentical(int group1, int group2) {
+        int particle1, particle2, particle3;
+        double angle1, angle2, k1, k2;
+        force.getAngleParameters(group1, particle1, particle2, particle3, angle1, k1);
+        force.getAngleParameters(group2, particle1, particle2, particle3, angle2, k2);
+        return (angle1 == angle2 && k1 == k2);
+    }
+private:
+    const CutoffAngleForce& force;
+};
+
+void CommonCalcCutoffAngleForceKernel::initialize(const System& system, const CutoffAngleForce& force) {
+    ContextSelector selector(cc);
+    int numContexts = cc.getNumContexts();
+    int startIndex = cc.getContextIndex()*force.getNumAngles()/numContexts;
+    int endIndex = (cc.getContextIndex()+1)*force.getNumAngles()/numContexts;
+    numAngles = endIndex-startIndex;
+    if (numAngles == 0)
+        return;
+    //mm_float3 is made by me for 3 params
+    vector<vector<int> > atoms(numAngles, vector<int>(5));
+    params.initialize<mm_float3>(cc, numAngles, "angleParams");
+
+    int bondingparticle1, bondingparticle2;
+    double cutoff;
+    force.getBondParameter(bondingparticle1, bondingparticle2, cutoff);
+
+    vector<mm_float3> paramVector(numAngles);
+    for (int i = 0; i < numAngles; i++) {
+        double angle, k;
+        force.getAngleParameters(startIndex+i, atoms[i][0], atoms[i][1], atoms[i][2], angle, k);
+        atoms[i][3] = bondingparticle1;
+        atoms[i][4] = bondingparticle2;
+        paramVector[i] = mm_float3((float) angle, (float) k, (float) cutoff);
+    }
+
+    params.upload(paramVector);
+    map<string, string> replacements;
+    replacements["APPLY_PERIODIC"] = (force.usesPeriodicBoundaryConditions() ? "1" : "0");
+    replacements["COMPUTE_FORCE"] = CommonKernelSources::cutoffAngleForce;
+    replacements["PARAMS"] = cc.getBondedUtilities().addArgument(params, "float3");
+    cc.getBondedUtilities().addInteraction(atoms, cc.replaceStrings(CommonKernelSources::calccutoffAngleForce, replacements), force.getForceGroup());
+    info = new ForceInfo(force);
+    cc.addForce(info);
+}
+
+double CommonCalcCutoffAngleForceKernel::execute(ContextImpl& context, bool includeForces, bool includeEnergy) {
+    return 0.0;
+}
+
+void CommonCalcCutoffAngleForceKernel::copyParametersToContext(ContextImpl& context, const CutoffAngleForce& force) {
+    ContextSelector selector(cc);
+    int numContexts = cc.getNumContexts();
+    int startIndex = cc.getContextIndex()*force.getNumAngles()/numContexts;
+    int endIndex = (cc.getContextIndex()+1)*force.getNumAngles()/numContexts;
+    if (numAngles != endIndex-startIndex)
+        throw OpenMMException("updateParametersInContext: The number of angles has changed");
+    if (numAngles == 0)
+        return;
+
+    // Record the per-angle parameters.
+    int bondingparticle1, bondingparticle2;
+    double cutoff;
+    force.getBondParameter(bondingparticle1, bondingparticle2, cutoff);
+
+    vector<mm_float3> paramVector(numAngles);
+    for (int i = 0; i < numAngles; i++) {
+        int atom1, atom2, atom3;
+        double angle, k;
+        force.getAngleParameters(startIndex+i, atom1, atom2, atom3, angle, k);
+        paramVector[i] = mm_float3((float) angle, (float) k, (float) cutoff);
+    }
+    params.upload(paramVector);
+
+    // Mark that the current reordering may be invalid.
+
+    cc.invalidateMolecules();
+}
+
+
 class CommonCalcCustomAngleForceKernel::ForceInfo : public ComputeForceInfo {
 public:
     ForceInfo(const CustomAngleForce& force) : force(force) {

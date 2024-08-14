@@ -71,6 +71,13 @@ struct mm_float4 {
     mm_float4(float x, float y, float z, float w) : x(x), y(y), z(z), w(w) {
     }
 };
+struct mm_float3 {
+    float x, y, z;
+    mm_float3() {
+    }
+    mm_float3(float x, float y, float z) : x(x), y(y), z(z){
+    }
+};
 struct mm_double2 {
     double x, y;
     mm_double2() {

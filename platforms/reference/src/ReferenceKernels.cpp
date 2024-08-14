@@ -51,6 +51,7 @@
 #include "ReferenceCustomTorsionIxn.h"
 #include "ReferenceGayBerneForce.h"
 #include "ReferenceHarmonicBondIxn.h"
+#include "ReferenceCutoffAngleBondIxn.h"
 #include "ReferenceLangevinMiddleDynamics.h"
 #include "ReferenceLJCoulomb14.h"
 #include "ReferenceLJCoulombIxn.h"
@@ -550,11 +551,11 @@ void ReferenceCalcCutoffAngleForceKernel::initialize(const System& system, const
         int particle1, particle2, particle3;
         double angle, k;
         force.getAngleParameters(i, particle1, particle2, particle3, angle, k);
-        angleIndexArray[i][0] = bondparticle1;
-        angleIndexArray[i][1] = bondparticle1;
-        angleIndexArray[i][2] = particle1;
-        angleIndexArray[i][3] = particle2;
-        angleIndexArray[i][4] = particle3;
+        angleIndexArray[i][0] = particle1;
+        angleIndexArray[i][1] = particle2;
+        angleIndexArray[i][2] = particle3;
+        angleIndexArray[i][3] = bondparticle1;
+        angleIndexArray[i][4] = bondparticle1;
         angleParamArray[i][0] = angle;
         angleParamArray[i][1] = k;
         angleParamArray[i][2] = cutoff;
@@ -567,7 +568,7 @@ double ReferenceCalcCutoffAngleForceKernel::execute(ContextImpl& context, bool i
     vector<Vec3>& forceData = extractForces(context);
     double energy = 0;
     ReferenceBondForce refBondForce;
-    ReferenceAngleBondIxn angleBond;
+    ReferenceCutoffAngleBondIxn angleBond;
     if (usePeriodic)
         angleBond.setPeriodic(extractBoxVectors(context));
     refBondForce.calculateForce(numAngles, angleIndexArray, posData, angleParamArray, forceData, includeEnergy ? &energy : NULL, angleBond);

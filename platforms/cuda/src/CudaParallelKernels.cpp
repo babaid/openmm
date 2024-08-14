@@ -414,6 +414,47 @@ void CudaParallelCalcHarmonicAngleForceKernel::copyParametersToContext(ContextIm
         getKernel(i).copyParametersToContext(context, force);
 }
 
+class CudaParallelCalcCutoffAngleForceKernel::Task : public CudaContext::WorkTask {
+public:
+    Task(ContextImpl& context, CommonCalcCutoffAngleForceKernel& kernel, bool includeForce,
+         bool includeEnergy, double& energy) : context(context), kernel(kernel),
+                                               includeForce(includeForce), includeEnergy(includeEnergy), energy(energy) {
+    }
+    void execute() {
+        energy += kernel.execute(context, includeForce, includeEnergy);
+    }
+private:
+    ContextImpl& context;
+    CommonCalcCutoffAngleForceKernel& kernel;
+    bool includeForce, includeEnergy;
+    double& energy;
+};
+
+CudaParallelCalcCutoffAngleForceKernel::CudaParallelCalcCutoffAngleForceKernel(std::string name, const Platform& platform, CudaPlatform::PlatformData& data, const System& system) :
+        CalcCutoffAngleForceKernel(name, platform), data(data) {
+    for (int i = 0; i < (int) data.contexts.size(); i++)
+        kernels.push_back(Kernel(new CommonCalcCutoffAngleForceKernel(name, platform, *data.contexts[i], system)));
+}
+
+void CudaParallelCalcCutoffAngleForceKernel::initialize(const System& system, const CutoffAngleForce& force) {
+    for (int i = 0; i < (int) kernels.size(); i++)
+        getKernel(i).initialize(system, force);
+}
+
+double CudaParallelCalcCutoffAngleForceKernel::execute(ContextImpl& context, bool includeForces, bool includeEnergy) {
+    for (int i = 0; i < (int) data.contexts.size(); i++) {
+        CudaContext& cu = *data.contexts[i];
+        ComputeContext::WorkThread& thread = cu.getWorkThread();
+        thread.addTask(new Task(context, getKernel(i), includeForces, includeEnergy, data.contextEnergy[i]));
+    }
+    return 0.0;
+}
+
+void CudaParallelCalcCutoffAngleForceKernel::copyParametersToContext(ContextImpl& context, const CutoffAngleForce& force) {
+    for (int i = 0; i < (int) kernels.size(); i++)
+        getKernel(i).copyParametersToContext(context, force);
+}
+
 class CudaParallelCalcCustomAngleForceKernel::Task : public CudaContext::WorkTask {
 public:
     Task(ContextImpl& context, CommonCalcCustomAngleForceKernel& kernel, bool includeForce,
