@@ -112,5 +112,7 @@ KernelImpl* ReferenceKernelFactory::createKernelImpl(std::string name, const Pla
         return new ReferenceRemoveCMMotionKernel(name, platform, data);
     if (name == ReferenceCalcCutoffAngleForceKernel::Name())
         return new ReferenceCalcCutoffAngleForceKernel(name, platform);
+    if (name==ReferenceCalcCutoffPeriodicTorsionForceKernel::Name())
+        return new ReferenceCalcCutoffPeriodicTorsionForceKernel(name, platform);
     throw OpenMMException((std::string("Tried to create kernel with illegal kernel name '") + name + "'").c_str());
 }

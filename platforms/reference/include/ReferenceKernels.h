@@ -517,6 +517,41 @@ private:
     bool usePeriodic;
 };
 
+class ReferenceCalcCutoffPeriodicTorsionForceKernel : public CalcCutoffPeriodicTorsionForceKernel {
+    public:
+        ReferenceCalcCutoffPeriodicTorsionForceKernel(std::string name, const Platform& platform) : CalcCutoffPeriodicTorsionForceKernel(name, platform) {
+        }
+        /**
+         * Initialize the kernel.
+         *
+         * @param system     the System this kernel will be applied to
+         * @param force      the PeriodicTorsionForce this kernel will be used for
+         */
+        void initialize(const System& system, const CutoffPeriodicTorsionForce& force);
+        /**
+         * Execute the kernel to calculate the forces and/or energy.
+         *
+         * @param context        the context in which to execute this kernel
+         * @param includeForces  true if forces should be calculated
+         * @param includeEnergy  true if the energy should be calculated
+         * @return the potential energy due to the force
+         */
+        double execute(ContextImpl& context, bool includeForces, bool includeEnergy);
+        /**
+         * Copy changed parameters over to a context.
+         *
+         * @param context    the context to copy parameters to
+         * @param force      the PeriodicTorsionForce to copy the parameters from
+         */
+        void copyParametersToContext(ContextImpl& context, const CutoffPeriodicTorsionForce& force);
+    private:
+        int numTorsions;
+        std::vector<std::vector<int> >torsionIndexArray;
+        std::vector<std::vector<double> >torsionParamArray;
+        bool usePeriodic;
+    };
+
+
 /**
  * This kernel is invoked by RBTorsionForce to calculate the forces acting on the system and the energy of the system.
  */

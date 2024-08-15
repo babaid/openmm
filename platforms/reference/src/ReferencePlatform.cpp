@@ -46,7 +46,6 @@ ReferencePlatform::ReferencePlatform() {
     registerKernelFactory(ApplyConstraintsKernel::Name(), factory);
     registerKernelFactory(VirtualSitesKernel::Name(), factory);
     registerKernelFactory(CalcHarmonicBondForceKernel::Name(), factory);
-    registerKernelFactory(CalcCutoffAngleForceKernel::Name(), factory);
     registerKernelFactory(CalcCustomBondForceKernel::Name(), factory);
     registerKernelFactory(CalcHarmonicAngleForceKernel::Name(), factory);
     registerKernelFactory(CalcCustomAngleForceKernel::Name(), factory);
@@ -78,6 +77,8 @@ ReferencePlatform::ReferencePlatform() {
     registerKernelFactory(ApplyAndersenThermostatKernel::Name(), factory);
     registerKernelFactory(ApplyMonteCarloBarostatKernel::Name(), factory);
     registerKernelFactory(RemoveCMMotionKernel::Name(), factory);
+    registerKernelFactory(CalcCutoffAngleForceKernel::Name(), factory);
+    registerKernelFactory(CalcCutoffPeriodicTorsionForceKernel::Name(), factory);
 }
 
 double ReferencePlatform::getSpeed() const {

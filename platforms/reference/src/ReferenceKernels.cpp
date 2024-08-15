@@ -52,6 +52,7 @@
 #include "ReferenceGayBerneForce.h"
 #include "ReferenceHarmonicBondIxn.h"
 #include "ReferenceCutoffAngleBondIxn.h"
+#include "ReferenceCutoffProperDihedralBond.h"
 #include "ReferenceLangevinMiddleDynamics.h"
 #include "ReferenceLJCoulomb14.h"
 #include "ReferenceLJCoulombIxn.h"
@@ -726,6 +727,64 @@ void ReferenceCalcPeriodicTorsionForceKernel::copyParametersToContext(ContextImp
         torsionParamArray[i][0] = k;
         torsionParamArray[i][1] = phase;
         torsionParamArray[i][2] = periodicity;
+    }
+}
+
+void ReferenceCalcCutoffPeriodicTorsionForceKernel::initialize(const System& system, const CutoffPeriodicTorsionForce& force) {
+    int bondparticle1, bondaparticle2;
+    double cutoff;
+    force.getBondParameter(bondparticle1, bondaparticle2, cutoff);
+    numTorsions = force.getNumTorsions();
+    torsionIndexArray.resize(numTorsions, vector<int>(6));
+    torsionParamArray.resize(numTorsions, vector<double>(4));
+    for (int i = 0; i < numTorsions; ++i) {
+        int particle1, particle2, particle3, particle4, periodicity;
+        double phase, k;
+        force.getTorsionParameters(i, particle1, particle2, particle3, particle4, periodicity, phase, k);
+        torsionIndexArray[i][0] = particle1;
+        torsionIndexArray[i][1] = particle2;
+        torsionIndexArray[i][2] = particle3;
+        torsionIndexArray[i][3] = particle4;
+        torsionIndexArray[i][4] = bondparticle1;
+        torsionIndexArray[i][5] = bondaparticle2;
+        torsionParamArray[i][0] = k;
+        torsionParamArray[i][1] = phase;
+        torsionParamArray[i][2] = periodicity;
+        torsionParamArray[i][3] = cutoff;
+    }
+    usePeriodic = force.usesPeriodicBoundaryConditions();
+}
+
+double ReferenceCalcCutoffPeriodicTorsionForceKernel::execute(ContextImpl& context, bool includeForces, bool includeEnergy) {
+    vector<Vec3>& posData = extractPositions(context);
+    vector<Vec3>& forceData = extractForces(context);
+    double energy = 0;
+    ReferenceBondForce refBondForce;
+    ReferenceCutoffProperDihedralBond periodicTorsionBond;
+    if (usePeriodic)
+        periodicTorsionBond.setPeriodic(extractBoxVectors(context));
+    refBondForce.calculateForce(numTorsions, torsionIndexArray, posData, torsionParamArray, forceData, includeEnergy ? &energy : NULL, periodicTorsionBond);
+    return energy;
+}
+
+void ReferenceCalcCutoffPeriodicTorsionForceKernel::copyParametersToContext(ContextImpl& context, const CutoffPeriodicTorsionForce& force) {
+    if (numTorsions != force.getNumTorsions())
+        throw OpenMMException("updateParametersInContext: The number of torsions has changed");
+
+    // Record the values.
+    int bondparticle1, bondaparticle2;
+    double cutoff;
+    force.getBondParameter(bondparticle1, bondaparticle2, cutoff);
+    for (int i = 0; i < numTorsions; ++i) {
+        int particle1, particle2, particle3, particle4, periodicity;
+        double phase, k;
+        force.getTorsionParameters(i, particle1, particle2, particle3, particle4, periodicity, phase, k);
+        if (particle1 != torsionIndexArray[i][0] || particle2 != torsionIndexArray[i][1] || particle3 != torsionIndexArray[i][2] || particle4 != torsionIndexArray[i][3])
+            throw OpenMMException("updateParametersInContext: The set of particles in a torsion has changed");
+        torsionParamArray[i][0] = k;
+        torsionParamArray[i][1] = phase;
+        torsionParamArray[i][2] = periodicity;
+        torsionParamArray[i][3] = cutoff;
     }
 }
 
