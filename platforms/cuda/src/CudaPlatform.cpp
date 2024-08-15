@@ -81,6 +81,7 @@ CudaPlatform::CudaPlatform() {
     registerKernelFactory(CalcCutoffAngleForceKernel::Name(), factory);
     registerKernelFactory(CalcCustomAngleForceKernel::Name(), factory);
     registerKernelFactory(CalcPeriodicTorsionForceKernel::Name(), factory);
+    registerKernelFactory(CalcCutoffPeriodicTorsionForceKernel::Name(), factory);
     registerKernelFactory(CalcRBTorsionForceKernel::Name(), factory);
     registerKernelFactory(CalcCMAPTorsionForceKernel::Name(), factory);
     registerKernelFactory(CalcCustomTorsionForceKernel::Name(), factory);

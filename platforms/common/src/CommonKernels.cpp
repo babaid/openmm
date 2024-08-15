@@ -1121,6 +1121,108 @@ void CommonCalcPeriodicTorsionForceKernel::copyParametersToContext(ContextImpl& 
     cc.invalidateMolecules();
 }
 
+class CommonCalcCutoffPeriodicTorsionForceKernel::ForceInfo : public ComputeForceInfo {
+public:
+    ForceInfo(const CutoffPeriodicTorsionForce& force) : force(force) {
+    }
+    int getNumParticleGroups() {
+        return force.getNumTorsions();
+    }
+    void getParticlesInGroup(int index, vector<int>& particles) {
+        int bondingparticle1, bondingparticle2;
+        double cutoff;
+        force.getBondParameter(bondingparticle1, bondingparticle2, cutoff);
+        int particle1, particle2, particle3, particle4, periodicity;
+        double phase, k;
+        force.getTorsionParameters(index, particle1, particle2, particle3, particle4, periodicity, phase, k);
+        particles.resize(6);
+        particles[0] = particle1;
+        particles[1] = particle2;
+        particles[2] = particle3;
+        particles[3] = particle4;
+        particles[4] = bondingparticle1;
+        particles[5] = bondingparticle2;
+    }
+    bool areGroupsIdentical(int group1, int group2) {
+        int particle1, particle2, particle3, particle4, periodicity1, periodicity2;
+        double phase1, phase2, k1, k2;
+        force.getTorsionParameters(group1, particle1, particle2, particle3, particle4, periodicity1, phase1, k1);
+        force.getTorsionParameters(group2, particle1, particle2, particle3, particle4, periodicity2, phase2, k2);
+        return (periodicity1 == periodicity2 && phase1 == phase2 && k1 == k2);
+    }
+private:
+    const CutoffPeriodicTorsionForce& force;
+};
+
+void CommonCalcCutoffPeriodicTorsionForceKernel::initialize(const System& system, const CutoffPeriodicTorsionForce& force) {
+    ContextSelector selector(cc);
+    int numContexts = cc.getNumContexts();
+    int startIndex = cc.getContextIndex()*force.getNumTorsions()/numContexts;
+    int endIndex = (cc.getContextIndex()+1)*force.getNumTorsions()/numContexts;
+    numTorsions = endIndex-startIndex;
+    if (numTorsions == 0)
+        return;
+
+    vector<vector<int> > atoms(numTorsions, vector<int>(6));
+
+    int bondingparticle1, bondingparticle2;
+    double cutoff;
+    force.getBondParameter(bondingparticle1, bondingparticle2, cutoff);
+    params.initialize<mm_float4>(cc, numTorsions, "periodicTorsionParams");
+    vector<mm_float4> paramVector(numTorsions);
+    for (int i = 0; i < numTorsions; i++) {
+        int periodicity;
+        double phase, k;
+        force.getTorsionParameters(startIndex+i, atoms[i][0], atoms[i][1], atoms[i][2], atoms[i][3], periodicity, phase, k);
+        paramVector[i] = mm_float4((float) k, (float) phase, (float) periodicity, (float) cutoff);
+        atoms[i][4] = bondingparticle1;
+        atoms[i][5] = bondingparticle2;
+    }
+
+    params.upload(paramVector);
+    map<string, string> replacements;
+    replacements["APPLY_PERIODIC"] = (force.usesPeriodicBoundaryConditions() ? "1" : "0");
+    replacements["COMPUTE_FORCE"] = CommonKernelSources::cutoffperiodicTorsionForce;
+    replacements["PARAMS"] = cc.getBondedUtilities().addArgument(params, "float4");
+    cc.getBondedUtilities().addInteraction(atoms, cc.replaceStrings(CommonKernelSources::calccutoffPeriodicTorsionForce, replacements), force.getForceGroup());
+    info = new ForceInfo(force);
+    cc.addForce(info);
+}
+
+double CommonCalcCutoffPeriodicTorsionForceKernel::execute(ContextImpl& context, bool includeForces, bool includeEnergy) {
+    return 0.0;
+}
+
+void CommonCalcCutoffPeriodicTorsionForceKernel::copyParametersToContext(ContextImpl& context, const CutoffPeriodicTorsionForce& force) {
+    ContextSelector selector(cc);
+    int numContexts = cc.getNumContexts();
+    int startIndex = cc.getContextIndex()*force.getNumTorsions()/numContexts;
+    int endIndex = (cc.getContextIndex()+1)*force.getNumTorsions()/numContexts;
+    if (numTorsions != endIndex-startIndex)
+        throw OpenMMException("updateParametersInContext: The number of torsions has changed");
+    if (numTorsions == 0)
+        return;
+
+    // Record the per-torsion parameters.
+    vector<mm_float4> paramVector(numTorsions);
+
+    int bondingparticle1, bondingparticle2;
+    double cutoff;
+    force.getBondParameter(bondingparticle1, bondingparticle2, cutoff);
+
+    for (int i = 0; i < numTorsions; i++) {
+        int atom1, atom2, atom3, atom4, periodicity;
+        double phase, k;
+        force.getTorsionParameters(startIndex+i, atom1, atom2, atom3, atom4, periodicity, phase, k);
+        paramVector[i] = mm_float4((float) k, (float) phase, (float) periodicity, (float) cutoff);
+    }
+    params.upload(paramVector);
+
+    // Mark that the current reordering may be invalid.
+
+    cc.invalidateMolecules();
+}
+
 class CommonCalcRBTorsionForceKernel::ForceInfo : public ComputeForceInfo {
 public:
     ForceInfo(const RBTorsionForce& force) : force(force) {

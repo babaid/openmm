@@ -326,6 +326,44 @@ private:
 };
 
 /**
+ * This kernel is invoked by PeriodicTorsionForce to calculate the forces acting on the system and the energy of the system.
+ */
+    class CudaParallelCalcCutoffPeriodicTorsionForceKernel : public CalcCutoffPeriodicTorsionForceKernel {
+    public:
+        CudaParallelCalcCutoffPeriodicTorsionForceKernel(std::string name, const Platform& platform, CudaPlatform::PlatformData& data, const System& system);
+        CommonCalcCutoffPeriodicTorsionForceKernel& getKernel(int index) {
+            return dynamic_cast<CommonCalcCutoffPeriodicTorsionForceKernel&>(kernels[index].getImpl());
+        }
+        /**
+         * Initialize the kernel.
+         *
+         * @param system     the System this kernel will be applied to
+         * @param force      the PeriodicTorsionForce this kernel will be used for
+         */
+        void initialize(const System& system, const CutoffPeriodicTorsionForce& force);
+        /**
+         * Execute the kernel to calculate the forces and/or energy.
+         *
+         * @param context        the context in which to execute this kernel
+         * @param includeForces  true if forces should be calculated
+         * @param includeEnergy  true if the energy should be calculated
+         * @return the potential energy due to the force
+         */
+        double execute(ContextImpl& context, bool includeForces, bool includeEnergy);
+        class Task;
+        /**
+         * Copy changed parameters over to a context.
+         *
+         * @param context    the context to copy parameters to
+         * @param force      the PeriodicTorsionForce to copy the parameters from
+         */
+        void copyParametersToContext(ContextImpl& context, const CutoffPeriodicTorsionForce& force);
+    private:
+        CudaPlatform::PlatformData& data;
+        std::vector<Kernel> kernels;
+    };
+
+/**
  * This kernel is invoked by RBTorsionForce to calculate the forces acting on the system and the energy of the system.
  */
 class CudaParallelCalcRBTorsionForceKernel : public CalcRBTorsionForceKernel {

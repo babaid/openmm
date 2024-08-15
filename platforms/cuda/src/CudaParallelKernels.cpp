@@ -537,6 +537,47 @@ void CudaParallelCalcPeriodicTorsionForceKernel::copyParametersToContext(Context
         getKernel(i).copyParametersToContext(context, force);
 }
 
+class CudaParallelCalcCutoffPeriodicTorsionForceKernel::Task : public CudaContext::WorkTask {
+public:
+    Task(ContextImpl& context, CommonCalcCutoffPeriodicTorsionForceKernel& kernel, bool includeForce,
+         bool includeEnergy, double& energy) : context(context), kernel(kernel),
+                                               includeForce(includeForce), includeEnergy(includeEnergy), energy(energy) {
+    }
+    void execute() {
+        energy += kernel.execute(context, includeForce, includeEnergy);
+    }
+private:
+    ContextImpl& context;
+    CommonCalcCutoffPeriodicTorsionForceKernel& kernel;
+    bool includeForce, includeEnergy;
+    double& energy;
+};
+
+CudaParallelCalcCutoffPeriodicTorsionForceKernel::CudaParallelCalcCutoffPeriodicTorsionForceKernel(std::string name, const Platform& platform, CudaPlatform::PlatformData& data, const System& system) :
+        CalcCutoffPeriodicTorsionForceKernel(name, platform), data(data) {
+    for (int i = 0; i < (int) data.contexts.size(); i++)
+        kernels.push_back(Kernel(new CommonCalcCutoffPeriodicTorsionForceKernel(name, platform, *data.contexts[i], system)));
+}
+
+void CudaParallelCalcCutoffPeriodicTorsionForceKernel::initialize(const System& system, const CutoffPeriodicTorsionForce& force) {
+    for (int i = 0; i < (int) kernels.size(); i++)
+        getKernel(i).initialize(system, force);
+}
+
+double CudaParallelCalcCutoffPeriodicTorsionForceKernel::execute(ContextImpl& context, bool includeForces, bool includeEnergy) {
+    for (int i = 0; i < (int) data.contexts.size(); i++) {
+        CudaContext& cu = *data.contexts[i];
+        ComputeContext::WorkThread& thread = cu.getWorkThread();
+        thread.addTask(new Task(context, getKernel(i), includeForces, includeEnergy, data.contextEnergy[i]));
+    }
+    return 0.0;
+}
+
+void CudaParallelCalcCutoffPeriodicTorsionForceKernel::copyParametersToContext(ContextImpl& context, const CutoffPeriodicTorsionForce& force) {
+    for (int i = 0; i < (int) kernels.size(); i++)
+        getKernel(i).copyParametersToContext(context, force);
+}
+
 class CudaParallelCalcRBTorsionForceKernel::Task : public CudaContext::WorkTask {
 public:
     Task(ContextImpl& context, CommonCalcRBTorsionForceKernel& kernel, bool includeForce,
