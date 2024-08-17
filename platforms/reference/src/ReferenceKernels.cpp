@@ -543,11 +543,8 @@ void ReferenceCalcHarmonicAngleForceKernel::copyParametersToContext(ContextImpl&
 void ReferenceCalcCutoffAngleForceKernel::initialize(const System& system, const CutoffAngleForce& force) {
     numAngles = force.getNumAngles();
     angleIndexArray.resize(numAngles, vector<int>(3));
-    angleParamArray.resize(numAngles, vector<double>(2));
-    int bondparticle1, bondparticle2;
-    double cutoff;
-    force.getBondParameter(bondparticle1, bondparticle2, cutoff);
-
+    angleParamArray.resize(numAngles, vector<double>(3));
+    force.getBondParameter(bp1, bp2, cutoff);
     for (int i = 0; i < numAngles; ++i) {
         int particle1, particle2, particle3;
         double angle, k;
@@ -555,11 +552,9 @@ void ReferenceCalcCutoffAngleForceKernel::initialize(const System& system, const
         angleIndexArray[i][0] = particle1;
         angleIndexArray[i][1] = particle2;
         angleIndexArray[i][2] = particle3;
-        angleIndexArray[i][3] = bondparticle1;
-        angleIndexArray[i][4] = bondparticle1;
         angleParamArray[i][0] = angle;
         angleParamArray[i][1] = k;
-        angleParamArray[i][2] = cutoff;
+        angleParamArray[i][2] = 0.0; //this will be used to calculate the sigmoid prefactor
     }
     usePeriodic = force.usesPeriodicBoundaryConditions();
 }
@@ -570,6 +565,10 @@ double ReferenceCalcCutoffAngleForceKernel::execute(ContextImpl& context, bool i
     double energy = 0;
     ReferenceBondForce refBondForce;
     ReferenceCutoffAngleBondIxn angleBond;
+    Vec3 r = posData[bp1]-posData[bp2];
+    double dist = std::sqrt(r.dot(r));
+    for (int i = 0; i < numAngles; ++i)
+        angleParamArray[i][2] = 1/(1+std::exp(dist - cutoff));
     if (usePeriodic)
         angleBond.setPeriodic(extractBoxVectors(context));
     refBondForce.calculateForce(numAngles, angleIndexArray, posData, angleParamArray, forceData, includeEnergy ? &energy : NULL, angleBond);
@@ -731,12 +730,10 @@ void ReferenceCalcPeriodicTorsionForceKernel::copyParametersToContext(ContextImp
 }
 
 void ReferenceCalcCutoffPeriodicTorsionForceKernel::initialize(const System& system, const CutoffPeriodicTorsionForce& force) {
-    int bondparticle1, bondaparticle2;
-    double cutoff;
-    force.getBondParameter(bondparticle1, bondaparticle2, cutoff);
+    force.getBondParameter(bp1, bp2, cutoff);
     numTorsions = force.getNumTorsions();
-    torsionIndexArray.resize(numTorsions, vector<int>(6));
-    torsionParamArray.resize(numTorsions, vector<double>(4));
+    torsionIndexArray.resize(numTorsions, vector<int>(4));
+    torsionParamArray.resize(numTorsions, vector<double>(5));
     for (int i = 0; i < numTorsions; ++i) {
         int particle1, particle2, particle3, particle4, periodicity;
         double phase, k;
@@ -745,12 +742,10 @@ void ReferenceCalcCutoffPeriodicTorsionForceKernel::initialize(const System& sys
         torsionIndexArray[i][1] = particle2;
         torsionIndexArray[i][2] = particle3;
         torsionIndexArray[i][3] = particle4;
-        torsionIndexArray[i][4] = bondparticle1;
-        torsionIndexArray[i][5] = bondaparticle2;
         torsionParamArray[i][0] = k;
         torsionParamArray[i][1] = phase;
         torsionParamArray[i][2] = periodicity;
-        torsionParamArray[i][3] = cutoff;
+        torsionParamArray[i][3] = 0.0;
     }
     usePeriodic = force.usesPeriodicBoundaryConditions();
 }
@@ -759,6 +754,13 @@ double ReferenceCalcCutoffPeriodicTorsionForceKernel::execute(ContextImpl& conte
     vector<Vec3>& posData = extractPositions(context);
     vector<Vec3>& forceData = extractForces(context);
     double energy = 0;
+
+    Vec3 r = posData[bp1]-posData[bp2];
+    double dist = std::sqrt(r.dot(r));
+    double factor = 1/(1+std::exp(dist - cutoff));
+    for (int i = 0; i < numTorsions; ++i)
+        torsionParamArray[i][3] = factor;
+
     ReferenceBondForce refBondForce;
     ReferenceCutoffProperDihedralBond periodicTorsionBond;
     if (usePeriodic)
@@ -784,7 +786,7 @@ void ReferenceCalcCutoffPeriodicTorsionForceKernel::copyParametersToContext(Cont
         torsionParamArray[i][0] = k;
         torsionParamArray[i][1] = phase;
         torsionParamArray[i][2] = periodicity;
-        torsionParamArray[i][3] = cutoff;
+        torsionParamArray[i][3] = 0.0;
     }
 }
 

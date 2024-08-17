@@ -4,6 +4,6 @@ real dist = SQRT(dist2);
 
 float4 torsionParams = PARAMS[index];
 real deltaAngle = torsionParams.z*theta-torsionParams.y;
-energy += torsionParams.x*(1.0f+COS(deltaAngle))*(1/(1+exp(dist - torsionParams.w)));
+energy += torsionParams.x*(1.0f+COS(deltaAngle))*torsionParams.w;
 real sinDeltaAngle = SIN(deltaAngle);
-real dEdAngle = -torsionParams.x*torsionParams.z*sinDeltaAngle*(1/(1+exp(dist - torsionParams.w)));
+real dEdAngle = -torsionParams.x*torsionParams.z*sinDeltaAngle*torsionParams.w;

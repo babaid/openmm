@@ -60,11 +60,6 @@ void ReferenceCutoffProperDihedralBond::calculateBondIxn(vector<int>& atomIndice
     // ---------------------------------------------------------------------------------------
 
     // get deltaR, R2, and R between three pairs of atoms: [j,i], [j,k], [l,k]
-    int bondAtomA = atomIndices[4];
-    int bondAtomB = atomIndices[5];
-    double cutoff = parameters[3];
-    double sigmoidFactor = 1/(1+std::exp(std::sqrt(DOT3(atomCoordinates[bondAtomA], atomCoordinates[bondAtomB])) - cutoff ));
-
     int atomAIndex = atomIndices[0];
     int atomBIndex = atomIndices[1];
     int atomCIndex = atomIndices[2];
@@ -102,8 +97,8 @@ void ReferenceCutoffProperDihedralBond::calculateBondIxn(vector<int>& atomIndice
     double sinDeltaAngle  = SIN(deltaAngle);
     double dEdAngle       = -parameters[0]*parameters[2]*sinDeltaAngle;
     double energy         =  parameters[0]*(1.0 + cos(deltaAngle));
-    dEdAngle*=sigmoidFactor;
-    energy*=sigmoidFactor;
+    dEdAngle*=parameters[3];
+    energy*=parameters[3];
     // compute force
 
     double internalF[4][3];

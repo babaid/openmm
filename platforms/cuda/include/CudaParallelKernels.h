@@ -32,6 +32,8 @@
 #include "CudaKernels.h"
 #include "openmm/common/CommonKernels.h"
 
+#include<vector>
+
 namespace OpenMM {
 
 /**
@@ -244,8 +246,12 @@ private:
         void copyParametersToContext(ContextImpl& context, const CutoffAngleForce& force);
     private:
         class Task;
+        int bp1, bp2, forcegroup;
+        double cutoff;
         CudaPlatform::PlatformData& data;
         std::vector<Kernel> kernels;
+        std::vector<mm_float3> angleparameters;
+        std::vector<std::vector<int>> atoms;
     };
 
 

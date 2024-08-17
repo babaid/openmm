@@ -27,6 +27,7 @@
 #include "CudaParallelKernels.h"
 #include "CudaKernelSources.h"
 #include "openmm/common/ContextSelector.h"
+#include "CommonKernelSources.h"
 
 using namespace OpenMM;
 using namespace std;
@@ -437,11 +438,23 @@ CudaParallelCalcCutoffAngleForceKernel::CudaParallelCalcCutoffAngleForceKernel(s
 }
 
 void CudaParallelCalcCutoffAngleForceKernel::initialize(const System& system, const CutoffAngleForce& force) {
+    forcegroup = force.getForceGroup();
+    force.getBondParameter(bp1, bp2, cutoff);
+    vector<mm_float3> angleparameters(force.getNumAngles());
+    atoms.reserve(force.getNumAngles());
+    for (int i = 0; i < force.getNumAngles(); i++) {
+        int a, b, c;
+        double angle, k;
+        force.getAngleParameters(i, a, b, c, angle, k);
+        atoms[i] = {a, b, c};
+        angleparameters[i] = mm_float3((float) angle, (float) k, (float) 0.0);
+    }
     for (int i = 0; i < (int) kernels.size(); i++)
         getKernel(i).initialize(system, force);
 }
 
 double CudaParallelCalcCutoffAngleForceKernel::execute(ContextImpl& context, bool includeForces, bool includeEnergy) {
+    double energy = 0;
     for (int i = 0; i < (int) data.contexts.size(); i++) {
         CudaContext& cu = *data.contexts[i];
         ComputeContext::WorkThread& thread = cu.getWorkThread();

@@ -371,14 +371,16 @@ private:
          * @param force      the HarmonicAngleForce to copy the parameters from
          */
         void copyParametersToContext(ContextImpl& context, const CutoffAngleForce& force);
+
     private:
         class ForceInfo;
-        int numAngles;
+        int numAngles, bp1, bp2;
+        ComputeArray params;
+        double cutoff;
         bool hasInitializedKernel;
         ComputeContext& cc;
         ForceInfo* info;
         const System& system;
-        ComputeArray params;
     };
 
 /**
@@ -500,7 +502,8 @@ class CommonCalcCutoffPeriodicTorsionForceKernel : public CalcCutoffPeriodicTors
         void copyParametersToContext(ContextImpl& context, const CutoffPeriodicTorsionForce& force);
     private:
         class ForceInfo;
-        int numTorsions;
+        int numTorsions, bp1, bp2;
+        double cutoff;
         bool hasInitializedKernel;
         ComputeContext& cc;
         ForceInfo* info;

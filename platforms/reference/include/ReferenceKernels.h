@@ -431,7 +431,8 @@ private:
          */
         void copyParametersToContext(ContextImpl& context, const CutoffAngleForce& force);
     private:
-        int numAngles;
+        double cutoff;
+        int numAngles, bp1, bp2;
         std::vector<std::vector<int> >angleIndexArray;
         std::vector<std::vector<double> >angleParamArray;
         bool usePeriodic;
@@ -545,7 +546,8 @@ class ReferenceCalcCutoffPeriodicTorsionForceKernel : public CalcCutoffPeriodicT
          */
         void copyParametersToContext(ContextImpl& context, const CutoffPeriodicTorsionForce& force);
     private:
-        int numTorsions;
+        double cutoff;
+        int numTorsions, bp1, bp2;
         std::vector<std::vector<int> >torsionIndexArray;
         std::vector<std::vector<double> >torsionParamArray;
         bool usePeriodic;
