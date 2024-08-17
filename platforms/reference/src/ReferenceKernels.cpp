@@ -733,7 +733,7 @@ void ReferenceCalcCutoffPeriodicTorsionForceKernel::initialize(const System& sys
     force.getBondParameter(bp1, bp2, cutoff);
     numTorsions = force.getNumTorsions();
     torsionIndexArray.resize(numTorsions, vector<int>(4));
-    torsionParamArray.resize(numTorsions, vector<double>(5));
+    torsionParamArray.resize(numTorsions, vector<double>(4));
     for (int i = 0; i < numTorsions; ++i) {
         int particle1, particle2, particle3, particle4, periodicity;
         double phase, k;
