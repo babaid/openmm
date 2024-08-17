@@ -67,6 +67,8 @@
 #include "openmm/VariableLangevinIntegrator.h"
 #include "openmm/VariableVerletIntegrator.h"
 #include "openmm/VerletIntegrator.h"
+#include "openmm/CutoffAngleForce.h"
+#include "openmm/CutoffPeriodicTorsionForce.h"
 
 #include "openmm/serialization/SerializationProxy.h"
 #include "openmm/serialization/BrownianIntegratorProxy.h"
@@ -108,6 +110,8 @@
 #include "openmm/serialization/VariableLangevinIntegratorProxy.h"
 #include "openmm/serialization/VariableVerletIntegratorProxy.h"
 #include "openmm/serialization/VerletIntegratorProxy.h"
+#include "openmm/serialization/CutoffAngleForceProxy.h"
+#include "openmm/serialization/CutoffPeriodicTorsionForceProxy.h"
 
 #if defined(WIN32)
     #include <windows.h>
@@ -168,4 +172,6 @@ extern "C" void registerSerializationProxies() {
     SerializationProxy::registerProxy(typeid(VariableLangevinIntegrator), new VariableLangevinIntegratorProxy());
     SerializationProxy::registerProxy(typeid(VariableVerletIntegrator), new VariableVerletIntegratorProxy());
     SerializationProxy::registerProxy(typeid(VerletIntegrator), new VerletIntegratorProxy());
+    SerializationProxy::registerProxy(typeid(CutoffAngleForce), new CutoffAngleForceProxy());
+    SerializationProxy::registerProxy(typeid(CutoffPeriodicTorsionForce), new CutoffPeriodicTorsionForceProxy());
 }
