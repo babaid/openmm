@@ -31,7 +31,7 @@
 
 #include "openmm/OpenMMException.h"
 #include "openmm/internal/ContextImpl.h"
-#include "openmm/internal/CutoffPeriodicTorsionForceImpl.h"
+#include "../../plugins/semibondforces/openmmapi/include/openmm/internal/CutoffPeriodicTorsionForceImpl.h"
 #include "openmm/kernels.h"
 #include <sstream>
 

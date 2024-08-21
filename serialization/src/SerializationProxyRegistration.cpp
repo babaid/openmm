@@ -67,8 +67,8 @@
 #include "openmm/VariableLangevinIntegrator.h"
 #include "openmm/VariableVerletIntegrator.h"
 #include "openmm/VerletIntegrator.h"
-#include "openmm/CutoffAngleForce.h"
-#include "openmm/CutoffPeriodicTorsionForce.h"
+#include "../../plugins/semibondforces/openmmapi/include/openmm/CutoffAngleForce.h"
+#include "../../plugins/semibondforces/openmmapi/include/openmm/CutoffPeriodicTorsionForce.h"
 
 #include "openmm/serialization/SerializationProxy.h"
 #include "openmm/serialization/BrownianIntegratorProxy.h"
@@ -110,8 +110,8 @@
 #include "openmm/serialization/VariableLangevinIntegratorProxy.h"
 #include "openmm/serialization/VariableVerletIntegratorProxy.h"
 #include "openmm/serialization/VerletIntegratorProxy.h"
-#include "openmm/serialization/CutoffAngleForceProxy.h"
-#include "openmm/serialization/CutoffPeriodicTorsionForceProxy.h"
+#include "../../plugins/semibondforces/serialization/include/CutoffAngleForceProxy.h"
+#include "../../plugins/semibondforces/serialization/include/CutoffPeriodicTorsionForceProxy.h"
 
 #if defined(WIN32)
     #include <windows.h>

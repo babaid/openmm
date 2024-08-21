@@ -1,8 +1,8 @@
 #include "openmm/Force.h"
 #include "openmm/OpenMMException.h"
-#include "openmm/CutoffAngleForce.h"
+#include "../../plugins/semibondforces/openmmapi/include/openmm/CutoffAngleForce.h"
 #include "openmm/internal/AssertionUtilities.h"
-#include "openmm/internal/CutoffAngleForceImpl.h"
+#include "../../plugins/semibondforces/openmmapi/include/openmm/internal/CutoffAngleForceImpl.h"
 
 using namespace OpenMM;
 

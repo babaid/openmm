@@ -2,11 +2,11 @@
 #define OPENMM_CUTOFFPERIODICTORSIONFORCE_H_
 
 
-#include "Force.h"
-#include "Vec3.h"
+#include "openmm/Force.h"
+#include "openmm/Vec3.h"
 #include <map>
 #include <vector>
-#include "internal/windowsExport.h"
+#include "openmm/internal/windowsExport.h"
 
 namespace OpenMM {
 

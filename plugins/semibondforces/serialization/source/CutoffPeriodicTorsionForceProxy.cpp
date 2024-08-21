@@ -1,7 +1,7 @@
-#include "openmm/serialization/CutoffPeriodicTorsionForceProxy.h"
+#include "../include/CutoffPeriodicTorsionForceProxy.h"
 #include "openmm/serialization/SerializationNode.h"
 #include "openmm/Force.h"
-#include "openmm/CutoffPeriodicTorsionForce.h"
+#include "../../openmmapi/include/openmm/CutoffPeriodicTorsionForce.h"
 #include <sstream>
 
 using namespace OpenMM;

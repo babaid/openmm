@@ -2,8 +2,8 @@
 #define OPENMM_CUTOFFPERIODICTORSIONFORCEIMPL_H_
 
 
-#include "ForceImpl.h"
-#include "openmm/CutoffPeriodicTorsionForce.h"
+#include "openmm/internal/ForceImpl.h"
+#include "../CutoffPeriodicTorsionForce.h"
 #include "openmm/Kernel.h"
 #include <utility>
 #include <set>

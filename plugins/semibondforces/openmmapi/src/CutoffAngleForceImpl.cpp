@@ -3,7 +3,7 @@
 #endif
 #include "openmm/OpenMMException.h"
 #include "openmm/internal/ContextImpl.h"
-#include "openmm/internal/CutoffAngleForceImpl.h"
+#include "../../plugins/semibondforces/openmmapi/include/openmm/internal/CutoffAngleForceImpl.h"
 #include "openmm/kernels.h"
 #include <cmath>
 #include <sstream>

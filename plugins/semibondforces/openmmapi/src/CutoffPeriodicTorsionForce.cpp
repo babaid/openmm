@@ -1,8 +1,8 @@
 #include "openmm/Force.h"
 #include "openmm/OpenMMException.h"
-#include "openmm/CutoffPeriodicTorsionForce.h"
+#include "../../plugins/semibondforces/openmmapi/include/openmm/CutoffPeriodicTorsionForce.h"
 #include "openmm/internal/AssertionUtilities.h"
-#include "openmm/internal/CutoffPeriodicTorsionForceImpl.h"
+#include "../../plugins/semibondforces/openmmapi/include/openmm/internal/CutoffPeriodicTorsionForceImpl.h"
 
 using namespace OpenMM;
 

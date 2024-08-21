@@ -3,8 +3,8 @@
 
 
 
-#include "ForceImpl.h"
-#include "openmm/CutoffAngleForce.h"
+#include "openmm/internal/ForceImpl.h"
+#include "../CutoffAngleForce.h"
 #include "openmm/Kernel.h"
 #include <utility>
 #include <set>

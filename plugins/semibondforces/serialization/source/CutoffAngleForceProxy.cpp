@@ -1,7 +1,7 @@
-#include "openmm/serialization/CutoffAngleForceProxy.h"
+#include "../include/CutoffAngleForceProxy.h"
 #include "openmm/serialization/SerializationNode.h"
 #include "openmm/Force.h"
-#include "openmm/CutoffAngleForce.h"
+#include "../../openmmapi/include/openmm/CutoffAngleForce.h"
 #include <sstream>
 
 using namespace OpenMM;
