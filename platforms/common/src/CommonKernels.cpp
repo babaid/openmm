@@ -808,6 +808,8 @@ public:
         particles[0] = particle1;
         particles[1] = particle2;
         particles[2] = particle3;
+        particles[3] = bondingparticle1;
+        particles[4] = bondingparticle2;
     }
     bool areGroupsIdentical(int group1, int group2) {
         int particle1, particle2, particle3;
@@ -829,14 +831,15 @@ void CommonCalcCutoffAngleForceKernel::initialize(const System& system, const Cu
     if (numAngles == 0)
         return;
     //mm_float3 is made by me for 3 params
-    vector<vector<int> > atoms(numAngles, vector<int>(3));
+    vector<vector<int> > atoms(numAngles, vector<int>(5));
     params.initialize<mm_float3>(cc, numAngles, "angleParams");
-    force.getBondParameter(bp1, bp2, cutoff);
+   
     vector<mm_float3> paramVector(numAngles);
     for (int i = 0; i < numAngles; i++) {
         double angle, k;
         force.getAngleParameters(startIndex+i, atoms[i][0], atoms[i][1], atoms[i][2], angle, k);
-        paramVector[i] = mm_float3((float) angle, (float) k, (float) 0.0);
+        force.getBondParameter(atoms[i][3], atoms[i][4], cutoff);
+        paramVector[i] = mm_float3((float) angle, (float) k, (float) cutoff);
     }
 
     params.upload(paramVector);
@@ -844,25 +847,12 @@ void CommonCalcCutoffAngleForceKernel::initialize(const System& system, const Cu
     replacements["APPLY_PERIODIC"] = (force.usesPeriodicBoundaryConditions() ? "1" : "0");
     replacements["COMPUTE_FORCE"] = CommonKernelSources::cutoffAngleForce;
     replacements["PARAMS"] = cc.getBondedUtilities().addArgument(params, "float3");
-    cc.getBondedUtilities().addInteraction(atoms, cc.replaceStrings(CommonKernelSources::angleForce, replacements), force.getForceGroup());
+    cc.getBondedUtilities().addInteraction(atoms, cc.replaceStrings(CommonKernelSources::cutoffangleForceCalc, replacements), force.getForceGroup());
     info = new ForceInfo(force);
     cc.addForce(info);
 }
 
 double CommonCalcCutoffAngleForceKernel::execute(ContextImpl& context, bool includeForces, bool includeEnergy) {
-    ContextSelector selector(cc);
-    //get the positions and the angle params and update the factor (i.e. last angle param)
-    vector<Vec3> posData;
-    vector<mm_float3> paramVector;
-    context.getPositions(posData);
-    params.download(paramVector);
-    Vec3 r = posData[bp1] - posData[bp2];
-    float dist = (float) std::sqrt(r.dot(r));
-    float factor = (float) 1.0/(1.0 + std::exp(dist - cutoff));
-    if (params.isInitialized())
-        for (int i = 0; i < (int) paramVector.size(); i++)
-            paramVector[i].z = factor;
-    params.upload(paramVector);
     return 0.0;
 }
 
@@ -880,17 +870,12 @@ void CommonCalcCutoffAngleForceKernel::copyParametersToContext(ContextImpl& cont
     int bondingparticle1, bondingparticle2;
     double cutoff;
     force.getBondParameter(bondingparticle1, bondingparticle2, cutoff);
-    vector<Vec3> posData;
-    context.getPositions(posData);
-    Vec3 r = posData[bondingparticle1]-posData[bondingparticle2];
-    double dist = std::sqrt(r.dot(r));
-    double factor = 1/(1+std::exp(dist - cutoff));
     vector<mm_float3> paramVector(numAngles);
     for (int i = 0; i < numAngles; i++) {
         int atom1, atom2, atom3;
         double angle, k;
         force.getAngleParameters(startIndex+i, atom1, atom2, atom3, angle, k);
-        paramVector[i] = mm_float3((float) angle, (float) k, (float) factor);
+        paramVector[i] = mm_float3((float) angle, (float) k, (float) cutoff);
     }
     params.upload(paramVector);
 
@@ -1144,11 +1129,13 @@ public:
         int particle1, particle2, particle3, particle4, periodicity;
         double phase, k;
         force.getTorsionParameters(index, particle1, particle2, particle3, particle4, periodicity, phase, k);
-        particles.resize(4);
+        particles.resize(6);
         particles[0] = particle1;
         particles[1] = particle2;
         particles[2] = particle3;
         particles[3] = particle4;
+        particles[4] = bondingparticle1;
+        particles[5] = bondingparticle2;
     }
     bool areGroupsIdentical(int group1, int group2) {
         int particle1, particle2, particle3, particle4, periodicity1, periodicity2;
@@ -1170,15 +1157,15 @@ void CommonCalcCutoffPeriodicTorsionForceKernel::initialize(const System& system
     if (numTorsions == 0)
         return;
 
-    vector<vector<int> > atoms(numTorsions, vector<int>(4));
-    force.getBondParameter(bp1, bp2, cutoff);
+    vector<vector<int> > atoms(numTorsions, vector<int>(6));
     params.initialize<mm_float4>(cc, numTorsions, "periodicTorsionParams");
     vector<mm_float4> paramVector(numTorsions);
     for (int i = 0; i < numTorsions; i++) {
         int periodicity;
         double phase, k;
         force.getTorsionParameters(startIndex+i, atoms[i][0], atoms[i][1], atoms[i][2], atoms[i][3], periodicity, phase, k);
-        paramVector[i] = mm_float4((float) k, (float) phase, (float) periodicity, (float) 0.0);
+        force.getBondParameter(atoms[i][4], atoms[i][5], cutoff);
+        paramVector[i] = mm_float4((float) k, (float) phase, (float) periodicity, (float) cutoff);
     }
 
     params.upload(paramVector);
@@ -1186,25 +1173,12 @@ void CommonCalcCutoffPeriodicTorsionForceKernel::initialize(const System& system
     replacements["APPLY_PERIODIC"] = (force.usesPeriodicBoundaryConditions() ? "1" : "0");
     replacements["COMPUTE_FORCE"] = CommonKernelSources::cutoffperiodicTorsionForce;
     replacements["PARAMS"] = cc.getBondedUtilities().addArgument(params, "float4");
-    cc.getBondedUtilities().addInteraction(atoms, cc.replaceStrings(CommonKernelSources::torsionForce, replacements), force.getForceGroup());
+    cc.getBondedUtilities().addInteraction(atoms, cc.replaceStrings(CommonKernelSources::calccutoffPeriodicTorsionForce, replacements), force.getForceGroup());
     info = new ForceInfo(force);
     cc.addForce(info);
 }
 
 double CommonCalcCutoffPeriodicTorsionForceKernel::execute(ContextImpl& context, bool includeForces, bool includeEnergy) {
-    ContextSelector selector(cc);
-    //get the positions and the angle params and update the factor (i.e. last angle param)
-    vector<Vec3> posData;
-    vector<mm_float4> paramVector;
-    context.getPositions(posData);
-    params.download(paramVector);
-    Vec3 r = posData[bp1] - posData[bp2];
-    float dist = (float) std::sqrt(r.dot(r));
-    float factor = (float) 1.0/(1.0 + std::exp(dist - cutoff));
-    if (params.isInitialized())
-        for (int i = 0; i < (int) paramVector.size(); i++)
-            paramVector[i].w = factor;
-    params.upload(paramVector);
     return 0.0;
 }
 
@@ -1220,11 +1194,8 @@ void CommonCalcCutoffPeriodicTorsionForceKernel::copyParametersToContext(Context
 
     // Record the per-torsion parameters.
     vector<mm_float4> paramVector(numTorsions);
-
     int bondingparticle1, bondingparticle2;
     double cutoff;
-    force.getBondParameter(bondingparticle1, bondingparticle2, cutoff);
-
     for (int i = 0; i < numTorsions; i++) {
         int atom1, atom2, atom3, atom4, periodicity;
         double phase, k;

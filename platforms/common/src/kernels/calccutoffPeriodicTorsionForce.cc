@@ -24,7 +24,7 @@ else
 theta = ACOS(cosangle);
 theta = (dot(v0, cp1) >= 0 ? theta : -theta);
 COMPUTE_FORCE
-        real normCross1 = dot(cp0, cp0);
+real normCross1 = dot(cp0, cp0);
 real normSqrBC = dot(v1, v1);
 real normBC = SQRT(normSqrBC);
 real normCross2 = dot(cp1, cp1);
@@ -35,5 +35,5 @@ real3 force4 = ff.w*cp1;
 real3 s = ff.y*force1 - ff.z*force4;
 real3 force2 = s-force1;
 real3 force3 = -s-force4;
-real3 force5 = force1*0.0;
-real3 force6 = force1*0.0;
+real3 force5 = 0.0f*cp0;
+real3 force6 = 0.0f*cp0;
